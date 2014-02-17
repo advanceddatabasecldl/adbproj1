@@ -156,9 +156,33 @@ def bing_search(query, search_type):
 	return result_list
 
 
+class word(object):
+	def __init__(self,name=None,value=0,inverted_list=[]):
+		self.name = name
+		self.value = value
+		self.inverted_list = inverted_list
+
+
+#test the way to sort a object in python
 if __name__ == "__main__":
+<<<<<<< HEAD
 	main()
 
 __comment = '''
 {u'Description': u'30 years later, Steve Jobs still inspires Thirty years after Jobs introduced the Macintosh computer at a gathering in Boston, his presentation and passion ...', u'Title': u'30 years later, Steve Jobs still inspires - Business - The ...', u'Url': u'http://www.bostonglobe.com/business/2014/02/03/years-later-steve-jobs-still-inspires/wnKSCXi89VDX2LaFFAgr4M/story.html', u'__metadata': {u'type': u'WebResult', u'uri': u"https://api.datamarket.azure.com/Data.ashx/Bing/Search/Web?Query='steve jobs'&$skip=8&$top=1"}, u'DisplayUrl': u'www.bostonglobe.com/business/2014/02/03/years-later-steve-jobs...', u'ID': u'655ec1a5-4585-40f4-bfb8-2b591cd8ede2'}
 '''
+=======
+	word1 = word("hello",3,[1,7,5])
+	word2 = word("fuck",7,[2,6,5])
+	word3 = word("kk",5,[2,6,5])
+	pos_word_list = []
+	pos_word_list.append(word1)
+	pos_word_list.append(word2)
+	pos_word_list.append(word3)
+	print pos_word_list[1].name
+	pos_word_list.sort(key = lambda word: word.value)
+	print pos_word_list
+	print pos_word_list[1].name
+	for word in pos_word_list:
+		print word.value
+>>>>>>> f8d28640dba7d39733430aa41d009b4c8c0bad23
