@@ -165,7 +165,6 @@ class word(object):
 
 #test the way to sort a object in python
 if __name__ == "__main__":
-<<<<<<< HEAD
 	main()
 
 __comment = '''
