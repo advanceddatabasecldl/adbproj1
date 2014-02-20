@@ -1,18 +1,24 @@
-#! /usr/bin/python
+#! /usr/local/bin/python
+
 '''
 Created on Feb 3, 2014
 
 @author: Milannic
 '''
 
-from __builtin__ import len
-import sys
-import urllib
+import	argparse 
+import base64
 import urllib2
 import re
 import json
+import uuid
+from __builtin__ import str
+#import en
 #from locale import str
 
+iter_round = 0
+accountKey = ''
+precision10 = 0
 result_list = None
 relavant_list = []
 irrelavant_list = []
@@ -21,8 +27,9 @@ query_list = []
 query = ""
 beta = 0.85
 gamma = 1-beta
-non_sense_list = ["to","a","the","an","i","am","is","are","they","them","their","it","here","there","that","and","on","in","of","his","him","with","was","were"]
-symbol_list = ["\"",".",",","}","{","]","[",")","(","\'","\'s",":"]
+output_file_desp = None
+non_sense_list = ["us","our","to","a","the","an","i","am","is","are","they","them","their","it","here","there","that","and","on","in","of","his","him","with","was","were"]
+symbol_list = ["\"",".",",","}","{","]","[",")","(","\'","\'s",":","|","&","*"]
 
 def pre_processing(origin):
 	global non_sense_list
@@ -62,111 +69,135 @@ def iteration_result():
 	sorted_list = sorted(dic_table.items(), key=lambda x: x[1])
 	if len(sorted_list) == 0:
 		raise Exception("why there is no new word?")
-	elif len(sorted_list) == 1:
+# 	elif len(sorted_list) == 1:
+	else :
 		new_word = sorted_list.pop()[0]
 		query = query + " " + new_word 
 		query_list.append(new_word)
-	else: 
-		new_word = sorted_list.pop()[0]
-		query = query + " " + new_word 
-		query_list.append(new_word)
-		new_word = sorted_list.pop()[0]
-		query = query + " " + new_word 
-		query_list.append(new_word)
+# 	else: 
+# 		new_word = sorted_list.pop()[0]
+# 		query = query + " " + new_word 
+# 		query_list.append(new_word)
+# 		new_word = sorted_list.pop()[0]
+# 		query = query + " " + new_word 
+# 		query_list.append(new_word)
 
 def cal_precision(result_list):
 	global relavant_list
 	global irrelavant_list
+	global iter_round
+	global output_file_desp
+	
 	relavant_list = []
 	irrelavant_list = []
 	for index,result in zip(range(len(result_list)),result_list):
 		print "the number ",index, " result"
-		#print type(result['Description'])
+		output_file_desp.write("the number "+str(index) + " result\n\n")
+		
 		result['Description'] = result['Description'].encode('ascii','ignore')
 		result['Title'] = result['Title'].encode('ascii','ignore')
-		#print type(result['Description'])
+		result['Url'] = result['Url'].encode('ascii','ignore')
+		
 		print "Title : ",result['Title']
+		output_file_desp.write("Title : " + result['Title']+'\n\n')
+		
 		print "Description : ",result['Description']
+		output_file_desp.write("Description : " + result['Description']+'\n\n')
+		
 		print "Url : ",result['Url']
+		output_file_desp.write("Url : " + result['Url']+'\n\n')
+		
 		print "is this result relavant to your query? Yes Or No "
 		new_string = pre_processing(result['Description'] + " " +result['Title'])
-		print new_string
 		new_list = []
-		print "after the pre processing, the string will be:"
 		for split_word in new_string.split(" "):
-			if split_word not in non_sense_list and split_word not in query_list and len(split_word) !=0  and split_word != '-':
+			if split_word not in non_sense_list and split_word not in query_list and len(split_word) !=0  and split_word != '-' :
 				new_list.append(split_word)
-		print new_list
 		answer = raw_input("------>")
 		if re.match(".*[yY].*",answer) != None:
 			relavant_list.append(new_list)
+			output_file_desp.write("this result is related, yes\n\n")
 		elif re.match(".*[nN].*",answer)!=None:
 			irrelavant_list.append(new_list)
+			output_file_desp.write("this result is not related, no\n\n")
 		else:
+			output_file_desp.write("cannot recognize the parameter you input")
+			output_file_desp.close()
 			raise Exception("cannot recognize the parameter you input")
 	rela_num = len(relavant_list)
+	output_file_desp.write("in this iteration, the realted number of result is "+str(rela_num)+'\n\n')
 	return rela_num
 	
 			
 
 def main():
+	
 	global query
 	global query_list
-	query = "steve jobs"
+	global accountKey
+	global precision10
+	global iter_round
+	global output_file_desp
+	
+	output_file_desp = open("transcript_"+str(uuid.uuid1())[0:6],'w')
+	
+	#parse the parameter
+	my_parse = argparse.ArgumentParser(description = "this is a test")
+	my_parse.add_argument("-k","--key",dest = "my_key",type=str,default = "OWeD/fOooFJbAKRI1mxcpBlwof/LyYLz9nQ7lSBIjC8")
+	my_parse.add_argument("-q","--query",dest = "init_query",type=str,default ='steve jobs')
+	my_parse.add_argument("-p","--precision",dest = "precision10",type=float,default = 0.9)
+	my_para = my_parse.parse_args()
+	
+	
+	accountKey = my_para.my_key
+	query = my_para.init_query
+	precision10 = my_para.precision10
 	query_list = query.lower().split()
-	print query_list
-	precision10 = 0.9
-	result_list = bing_search(query, 'Web')
-	#print result_list
+	
 	while True:
+		output_file_desp.write("round "+str(iter_round)+'\n\n')
+		output_file_desp.write("current query is "+query+'\n\n')
+		result_list = bing_search(query)
 		if(len(result_list) < 10):
+			output_file_desp.write("less than 10 records found")
+			output_file_desp.close()
 			raise Exception("less than 10 records found")
 		rela_num=cal_precision(result_list)
-		print  rela_num
-		if(precision10 <= rela_num/10):
+		#print  rela_num
+		if(precision10 <= float(rela_num)/10):
 			break
 		elif(rela_num == 0):
+			output_file_desp.write("no related queries found")
+			output_file_desp.close()
 			raise Exception("no related queries found")
 		iteration_result()
-		result_list = bing_search(query, 'Web')
+		iter_round += 1
 		
+	output_file_desp.write("have reached the required precision10 \n\n")
+	output_file_desp.close()
 		
 
 
-def bing_search(query, search_type):
-	print "current query is ", query
-	#search_type: Web, Image, News, Video
-	key= 'OWeD/fOooFJbAKRI1mxcpBlwof/LyYLz9nQ7lSBIjC8'
-	query = urllib.quote(query)
+def bing_search(query):
 	# create credential for authentication
-	user_agent = 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; Trident/4.0; FDM; .NET CLR 2.0.50727; InfoPath.2; .NET CLR 1.1.4322)'
-	credentials = (':%s' % key).encode('base64')[:-1]
-	auth = 'Basic %s' % credentials
-	url = 'https://api.datamarket.azure.com/Data.ashx/Bing/Search/'+search_type+'?Query=%27'+query+'%27&$top=10&$format=json'
-	request = urllib2.Request(url)
-	request.add_header('Authorization', auth)
-	request.add_header('User-Agent', user_agent)
-	request_opener = urllib2.build_opener()
-	response = request_opener.open(request) 
-	response_data = response.read()
-	json_result = json.loads(response_data)
+	inner_query = urllib2.quote(query)
+	bingUrl = 'https://api.datamarket.azure.com/Bing/Search/Web?Query=%27'+inner_query+'%27&$top=10&$format=json'
+	accountKeyEnc = base64.b64encode(accountKey + ':' + accountKey)
+	headers = {'Authorization': 'Basic ' + accountKeyEnc}
+	req = urllib2.Request(bingUrl, headers = headers)
+	response = urllib2.urlopen(req)
+	content = response.read()
+	#print type(content)
+	#content contains the xml/json response from Bing. 
+	#then parse it 
+	json_result = json.loads(content)
+	#just get the field we need for parsing
+	# field information : Description, Title,Url
 	result_list = json_result['d']['results']
-# field information : Description, Title,Url
-#Specify the 
+	#return it
 	return result_list
 
 
-class word(object):
-	def __init__(self,name=None,value=0,inverted_list=[]):
-		self.name = name
-		self.value = value
-		self.inverted_list = inverted_list
-
-
-#test the way to sort a object in python
 if __name__ == "__main__":
 	main()
 
-__comment = '''
-{u'Description': u'30 years later, Steve Jobs still inspires Thirty years after Jobs introduced the Macintosh computer at a gathering in Boston, his presentation and passion ...', u'Title': u'30 years later, Steve Jobs still inspires - Business - The ...', u'Url': u'http://www.bostonglobe.com/business/2014/02/03/years-later-steve-jobs-still-inspires/wnKSCXi89VDX2LaFFAgr4M/story.html', u'__metadata': {u'type': u'WebResult', u'uri': u"https://api.datamarket.azure.com/Data.ashx/Bing/Search/Web?Query='steve jobs'&$skip=8&$top=1"}, u'DisplayUrl': u'www.bostonglobe.com/business/2014/02/03/years-later-steve-jobs...', u'ID': u'655ec1a5-4585-40f4-bfb8-2b591cd8ede2'}
-'''
