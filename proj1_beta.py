@@ -93,9 +93,6 @@ def iteration_result():
 
         for word in inverted_word_list:
             idf_list.append(math.log(10/len(inverted_word_table[word])))
-        print idf_list
-        print inverted_word_table
-        print inverted_word_list
 
 
 
