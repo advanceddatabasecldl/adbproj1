@@ -165,7 +165,6 @@ def main():
 	global iter_round
 	global output_file_desp
 	
-	output_file_desp = open("transcript_"+str(uuid.uuid1())[0:6],'w')
 	
 	#parse the parameter
 	my_parse = argparse.ArgumentParser(description = "this is a test")
@@ -182,11 +181,17 @@ def main():
         if precision10 > 1 or precision10 < 0:
             raise Exception("the precision parameter is not valid")
 
+	output_file_desp = open("transcript_"+str(uuid.uuid1())[0:6],'w')
+        output_file_desp.write("current precision10 is "+str(precision10))
+
 	query_list = query.lower().split(" ")
+        print "current precision10 is ",precision10
         #iteration loop	
 	while True:
 		output_file_desp.write("round "+str(iter_round)+'\n\n')
 		output_file_desp.write("current query is "+query+'\n\n')
+                print "current round is ",iter_round
+                print "current search is ",query
 		result_list = bing_search(query)
                 # if the results are less than 10, end the program
 		if(len(result_list) < 10):
