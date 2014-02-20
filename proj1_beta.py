@@ -14,6 +14,7 @@ import json
 import uuid
 import numpy
 import math
+from collections import defaultdict
 #import en
 #from locale import str
 
@@ -61,8 +62,8 @@ def iteration_result():
 	global beta
 	global gamma
 
-        inverted_word_table ={}
         inverted_word_list = []
+        inverted_word_table= defaultdict(list)
         idf_list = []
         for index,relevant_result in zip(range(len(relevant_list)),relevant_list):
             for relevant_word in relevant_result:
@@ -70,24 +71,31 @@ def iteration_result():
                     if index in inverted_word_table[relevant_word]:
                         pass
                     else:
-                        inverted_word_table[relevant_word] = inverted_word_table[relevant_word].append(index)
-
+                        temp = inverted_word_table[relevant_word]
+                        temp.append(index)
+                        inverted_word_table[relevant_word] = temp
                 else:
                     inverted_word_table[relevant_word] = [index]
                     inverted_word_list.append(relevant_word)
+
         for index,irrelevant_result in zip(range(len(relevant_list),len(irrelevant_list)+len(relevant_list)),irrelevant_list):
             for irrelevant_word in irrelevant_result:
                 if inverted_word_table.has_key(irrelevant_word):
                     if index in inverted_word_table[irrelevant_word]:
                         pass
                     else:
-                        inverted_word_table[irrelevant_word] = inverted_word_table[irrelevant_word].append(index)
-
+                        temp = inverted_word_table[irrelevant_word]
+                        temp.append(index)
+                        inverted_word_table[irrelevant_word] = temp
                 else:
                     inverted_word_table[irrelevant_word] = [index]
                     inverted_word_list.append(irrelevant_word)
+
         for word in inverted_word_list:
             idf_list.append(math.log(10/len(inverted_word_table[word])))
+        print idf_list
+        print inverted_word_table
+        print inverted_word_list
 
 
 
@@ -103,7 +111,8 @@ def iteration_result():
 			for relevant_word in relevant_result:
 					#new_value = beta/ratio
 					#new_value = beta/ratio
-                                        new_value = idf_list[inverted_word_list.index[relevant_word]]*beta/len(relevant_list)
+                                        my_index = inverted_word_list.index(relevant_word)
+                                        new_value = idf_list[my_index]*beta/len(relevant_list)
                                         #if the word is seen before, we just take out the score and add the value
 					if dic_table.has_key(relevant_word):
 						dic_table[relevant_word] = dic_table[relevant_word] + new_value 
@@ -116,7 +125,8 @@ def iteration_result():
 		ratio = len(irrelevant_result)
 		if ratio != 0 :
 			for irrelevant_word in irrelevant_result:
-                                        new_value = -1*idf_list[inverted_word_list.index[irrelevant_word]]*gamma/len(irrelevant_list)
+                                        my_index = inverted_word_list.index(irrelevant_word)
+                                        new_value = -1*idf_list[my_index]*gamma/len(irrelevant_list)
 					if dic_table.has_key(irrelevant_word):
 						dic_table[irrelevant_word] = dic_table[irrelevant_word] + new_value 
 					else:
