@@ -12,7 +12,8 @@ import urllib2
 import re
 import json
 import uuid
-from __builtin__ import str
+import numpy
+import math
 #import en
 #from locale import str
 
@@ -30,7 +31,7 @@ query = ""
 output_file_desp = None
 
 # weight parameter, beta is the word of weight occurring in a relevant result, gamma is the negative weight of a word occurring in a irrelevant 
-beta = 0.85
+beta = 0.45
 gamma = 1-beta
 
 #we filter the words in this list for they will never be used in the search expansion
@@ -59,6 +60,7 @@ def iteration_result():
 	global query
 	global beta
 	global gamma
+
         #we maintain a dictionary to store the total score of each word occurring in our filtered word list.
 	dic_table = {}
         #for each sentence in the relevant_list
@@ -69,6 +71,7 @@ def iteration_result():
                         #for each sentence in the relevant_list
 			for relevant_word in relevant_result:
 					new_value = beta/ratio
+                                        new_value = new_value/len(relevant_list)
                                         #if the word is seen before, we just take out the score and add the value
 					if dic_table.has_key(relevant_word):
 						dic_table[relevant_word] = dic_table[relevant_word] + new_value 
@@ -82,6 +85,7 @@ def iteration_result():
 		if ratio != 0 :
 			for irrelevant_word in irrelevant_result:
 					new_value = -gamma/ratio
+                                        new_value = new_value/len(irrelevant_list)
 					if dic_table.has_key(irrelevant_word):
 						dic_table[irrelevant_word] = dic_table[irrelevant_word] + new_value 
 					else:
