@@ -13,7 +13,6 @@ import re
 import json
 import uuid
 import math
-from stemming.porter2 import stem
 
 #global variables
 iter_round = 0
@@ -28,15 +27,15 @@ query = ""
 output_file_desp = None
 
 # weight parameter, beta is the word of weight occurring in a relevant result, gamma is the negative weight of a word occurring in a irrelevant 
-beta = 0.45
+beta = 0.85
 gamma = 1-beta
 
 #we filter the words in this list for they will never be used in the search expansion
 #this list of stop words is generated from nltk python library
-non_sense_list = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now']
+non_sense_list = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now','www','https','http','com','net','org']
 
 #and we need to remove all the symbols in a sentence
-symbol_list = ["\"",".",",","}","{","]","[",")","(","\'","\'s",":","|","&","*"]
+symbol_list = ["\"",".",",","}","{","]","[",")","(","\'","\'s",":","|","&","*","/","%","^","*","_"]
 
 #preprocessing function, used to remove all the symbol in the bing respond sentence, and transfer all the word to low_case
 def pre_processing(origin):
@@ -135,13 +134,13 @@ def iteration_result():
 		query_list.append(new_word)
 
 #originally we pop two words in each iteration, but it seems that it is less safe
-# 	else: 
-# 		new_word = sorted_list.pop()[0]
-# 		query = query + " " + new_word 
-# 		query_list.append(new_word)
-# 		new_word = sorted_list.pop()[0]
-# 		query = query + " " + new_word 
-# 		query_list.append(new_word)
+ 	#else: 
+ 	#	new_word = sorted_list.pop()[0]
+ 	#	query = query + " " + new_word 
+ 	#	query_list.append(new_word)
+ 	#	new_word = sorted_list.pop()[0]
+ 	#	query = query + " " + new_word 
+ 	#	query_list.append(new_word)
 
 
 #this function is used after get the original search response, for each result, we mark it either relevant or irrelevant, and store the information in the file and the global variables.
@@ -173,17 +172,14 @@ def cal_precision(result_list):
 		print "is this result relevant to your query? Yes Or No "
                 #preprocess the sentence, we just take the information from Title and the Description
 
-                processed_url = result['Url'].replace('.','/')
-                processed_url = processed_url.replace("http://",'')
-                processed_url = processed_url.replace("com",'')
-                processed_url = processed_url.replace("net",'')
-                processed_url = processed_url.replace('/',' ')
-		new_string = pre_processing(processed_url+result['Title'] +" "+result['Description'])
+		new_string = pre_processing(result['Url'] + " "+ result['Title'] +" "+result['Description'])
+                #print new_string
+		#answer = raw_input("new_string")
 		new_list = []
 		for split_word in new_string.split(" "):
                         # we should discard those words already in the query and in non_sense_list
-			if split_word not in non_sense_list and split_word not in query_list and len(split_word) !=0  and split_word != '-' :
-				new_list.append(stem(split_word))
+			if split_word not in non_sense_list and split_word not in query_list and len(split_word) !=0 and len(split_word) !=1 and split_word != '-' :
+				new_list.append(split_word)
 		answer = raw_input("------>")
                 #simple regular expression to recognize the input
                 while re.match(".*[yYnN].*",answer) == None:
