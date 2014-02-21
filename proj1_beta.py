@@ -13,7 +13,7 @@ import re
 import json
 import uuid
 import math
-
+from stemming.porter2 import stem
 
 #global variables
 iter_round = 0
@@ -59,7 +59,7 @@ def iteration_result():
 	global gamma
 
         inverted_word_list = []
-        inverted_word_table= defaultdict(list)
+        inverted_word_table= {}
         idf_list = []
         for index,relevant_result in zip(range(len(relevant_list)),relevant_list):
             for relevant_word in relevant_result:
@@ -172,12 +172,18 @@ def cal_precision(result_list):
 		
 		print "is this result relevant to your query? Yes Or No "
                 #preprocess the sentence, we just take the information from Title and the Description
-		new_string = pre_processing(result['Title'] +" "+result['Description'])
+
+                processed_url = result['Url'].replace('.','/')
+                processed_url = processed_url.replace("http://",'')
+                processed_url = processed_url.replace("com",'')
+                processed_url = processed_url.replace("net",'')
+                processed_url = processed_url.replace('/',' ')
+		new_string = pre_processing(processed_url+result['Title'] +" "+result['Description'])
 		new_list = []
 		for split_word in new_string.split(" "):
                         # we should discard those words already in the query and in non_sense_list
 			if split_word not in non_sense_list and split_word not in query_list and len(split_word) !=0  and split_word != '-' :
-				new_list.append(split_word)
+				new_list.append(stem(split_word))
 		answer = raw_input("------>")
                 #simple regular expression to recognize the input
                 while re.match(".*[yYnN].*",answer) == None:
@@ -240,7 +246,7 @@ def main():
 			raise Exception("less than 10 records found")
 		rela_num=cal_precision(result_list)
                 #if we have reached the required precision, end the program
-                print "current precision is ",float(rela_num)/10
+                print "previous precision is ",float(rela_num)/10
 		output_file_desp.write("current precision is "+str(float(rela_num)/10))
 		if(precision10 <= float(rela_num)/10):
 			break

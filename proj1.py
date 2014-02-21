@@ -14,7 +14,7 @@ import json
 import uuid
 import numpy
 import math
-from collections import defaultdict
+from stemming.porter2 import stem
 #import en
 #from locale import str
 
@@ -205,7 +205,7 @@ def main():
 			raise Exception("less than 10 records found")
 		rela_num=cal_precision(result_list)
                 #if we have reached the required precision, end the program
-                print "current precision is ",float(rela_num)/10
+                print "previous precision is ",float(rela_num)/10
 		output_file_desp.write("current precision is "+str(float(rela_num)/10))
 		if(precision10 <= float(rela_num)/10):
 			break
