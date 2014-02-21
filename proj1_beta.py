@@ -6,17 +6,13 @@ Created on Feb 3, 2014
 @author: Milannic
 '''
 
-import	argparse 
+import argparse 
 import base64
 import urllib2
 import re
 import json
 import uuid
-import numpy
 import math
-from collections import defaultdict
-#import en
-#from locale import str
 
 
 #global variables
@@ -137,6 +133,7 @@ def iteration_result():
 		new_word = sorted_list.pop()[0]
 		query = query + " " + new_word 
 		query_list.append(new_word)
+
 #originally we pop two words in each iteration, but it seems that it is less safe
 # 	else: 
 # 		new_word = sorted_list.pop()[0]
@@ -145,6 +142,7 @@ def iteration_result():
 # 		new_word = sorted_list.pop()[0]
 # 		query = query + " " + new_word 
 # 		query_list.append(new_word)
+
 
 #this function is used after get the original search response, for each result, we mark it either relevant or irrelevant, and store the information in the file and the global variables.
 def cal_precision(result_list):
@@ -182,23 +180,22 @@ def cal_precision(result_list):
 				new_list.append(split_word)
 		answer = raw_input("------>")
                 #simple regular expression to recognize the input
+                while re.match(".*[yYnN].*",answer) == None:
+                    print "cannot recognize the parameter you input,please re-input it again\n"
+                    answer = raw_input("------>")
 		if re.match(".*[yY].*",answer) != None:
 			relevant_list.append(new_list)
 			output_file_desp.write("this result is related, yes\n\n")
 		elif re.match(".*[nN].*",answer)!=None:
 			irrelevant_list.append(new_list)
 			output_file_desp.write("this result is not related, no\n\n")
-		else:
-			output_file_desp.write("cannot recognize the parameter you input")
-			output_file_desp.close()
-			raise Exception("cannot recognize the parameter you input")
         # calculate the number of relevant results
 	rela_num = len(relevant_list)
 	output_file_desp.write("in this iteration, the realted number of result is "+str(rela_num)+'\n\n')
 	return rela_num
 	
 			
-# main function,parse the parameter and do 
+# main function,parse the parameter and do some pre-work
 def main():
 	
 	global query
@@ -225,10 +222,10 @@ def main():
             raise Exception("the precision parameter is not valid")
 
 	output_file_desp = open("transcript_"+str(uuid.uuid1())[0:6],'w')
-        output_file_desp.write("current precision10 is "+str(precision10))
+        output_file_desp.write("desired precision10 is "+str(precision10))
 
 	query_list = query.lower().split(" ")
-        print "current precision10 is ",precision10
+        print "desired precision10 is ",precision10
         #iteration loop	
 	while True:
 		output_file_desp.write("round "+str(iter_round)+'\n\n')
@@ -243,6 +240,8 @@ def main():
 			raise Exception("less than 10 records found")
 		rela_num=cal_precision(result_list)
                 #if we have reached the required precision, end the program
+                print "current precision is ",float(rela_num)/10
+		output_file_desp.write("current precision is "+str(float(rela_num)/10))
 		if(precision10 <= float(rela_num)/10):
 			break
                 #if there is no relevant result, end the program
